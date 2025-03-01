@@ -1,0 +1,1895 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Brockman Lab Inventory Management System</title>
+  <style>
+    :root {
+      --primary-color: #c5050c;
+      --secondary-color: #9b0000;
+      --accent-color: #660000;
+      --light-gray: #f7f7f7;
+      --dark-gray: #646569;
+      --success: #2ecc71;
+      --warning: #f39c12;
+      --border-radius: 4px;
+    }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    body {
+      background-color: #f5f5f5;
+      color: #333;
+      line-height: 1.6;
+    }
+    header {
+      background-color: var(--primary-color);
+      color: white;
+      padding: 1rem 2rem;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .container {
+      width: 95%;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    h1 {
+      margin-bottom: 0.5rem;
+    }
+    .tabs {
+      display: flex;
+      flex-wrap: wrap;
+      border-bottom: 1px solid var(--dark-gray);
+      margin-bottom: 20px;
+    }
+    .tab {
+      padding: 10px 20px;
+      background-color: var(--light-gray);
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+      border-radius: var(--border-radius) var(--border-radius) 0 0;
+      margin-right: 5px;
+      margin-bottom: 5px;
+      transition: background-color 0.3s;
+    }
+    .tab.active {
+      background-color: var(--secondary-color);
+      color: white;
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+    .action-bar {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .search {
+      padding: 8px 12px;
+      border: 1px solid var(--dark-gray);
+      border-radius: var(--border-radius);
+      width: 300px;
+      margin: 5px 0;
+    }
+    button {
+      background-color: var(--secondary-color);
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: var(--border-radius);
+      cursor: pointer;
+      font-weight: bold;
+      transition: background-color 0.3s;
+    }
+    button:hover {
+      background-color: var(--accent-color);
+    }
+    .inventory-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+      background-color: white;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .inventory-table th {
+      background-color: var(--secondary-color);
+      color: white;
+      padding: 12px 15px;
+      text-align: left;
+    }
+    .inventory-table td {
+      padding: 12px 15px;
+      border-bottom: 1px solid var(--light-gray);
+    }
+    .inventory-row {
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    .inventory-row:hover {
+      background-color: #f9f9f9;
+    }
+    .inventory-details {
+      display: none;
+      background-color: var(--light-gray);
+      padding: 15px;
+      border-bottom: 1px solid var(--dark-gray);
+    }
+    .delete-btn {
+      background-color: #e74c3c;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: var(--border-radius);
+      cursor: pointer;
+    }
+    .visualize-btn {
+      background-color: #3498db;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: var(--border-radius);
+      cursor: pointer;
+      margin-left: 10px;
+    }
+    .sequence-display {
+      white-space: pre-wrap;
+      word-break: break-all;
+      padding: 8px;
+      border-radius: 4px;
+      border: 1px solid #ddd;
+      max-height: 150px;
+      overflow-y: auto;
+    }
+    /* For Gene Blocks, show full sequence */
+    .full-sequence {
+      white-space: pre-wrap;
+      word-break: break-all;
+      padding: 8px;
+      border-radius: 4px;
+      border: 1px solid #ddd;
+    }
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 15px;
+    }
+    .detail-item {
+      margin-bottom: 10px;
+    }
+    .detail-label {
+      font-weight: bold;
+      color: var(--primary-color);
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+      z-index: 1000;
+    }
+    .modal-content {
+      background-color: white;
+      width: 80%;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      border-radius: var(--border-radius);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+    .close {
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid var(--dark-gray);
+      border-radius: var(--border-radius);
+    }
+    .form-group textarea {
+      height: 100px;
+    }
+    .success-message {
+      background-color: var(--success);
+      color: white;
+      padding: 10px;
+      border-radius: var(--border-radius);
+      margin-bottom: 15px;
+      display: none;
+    }
+    .item-count {
+      color: var(--dark-gray);
+      font-size: 0.9rem;
+    }
+    /* Schedule grid: 15-min intervals from 08:00 to 22:00 */
+    .schedule-grid {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+    .schedule-grid td, .schedule-grid th {
+      border: 1px solid #eee;
+      text-align: center;
+      padding: 5px;
+      font-size: 0.8rem;
+    }
+    .schedule-header {
+      background-color: var(--secondary-color);
+      color: white;
+      font-weight: bold;
+    }
+    .schedule-time {
+      background-color: var(--secondary-color);
+      color: white;
+      font-weight: bold;
+    }
+    .schedule-cell {
+      cursor: pointer;
+      min-width: 80px;
+      min-height: 30px;
+    }
+    .schedule-cell.booked {
+      background-color: #f8d7da;
+    }
+    .schedule-cell.selected {
+      background-color: lightblue;
+    }
+    /* Week navigation arrows for schedules */
+    .week-nav {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .week-nav button {
+      margin: 0 10px;
+    }
+    /* Collapsible groups for sections */
+    .collapsible-header {
+      background-color: #ddd;
+      padding: 10px;
+      cursor: pointer;
+      border: 1px solid #ccc;
+      margin-bottom: 5px;
+    }
+    .collapsible-content {
+      display: none;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-top: none;
+      margin-bottom: 10px;
+    }
+    /* Lab Folders: grid vs list view */
+    .list-view .lab-folder {
+      width: 100%;
+    }
+    .folders-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin-top: 20px;
+    }
+    .lab-folder {
+      width: 300px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .folder-header {
+      padding: 15px;
+      background-color: var(--primary-color);
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .folder-content {
+      padding: 15px;
+    }
+    /* Subfolders styling */
+    .subfolders {
+      margin-top: 15px;
+      padding-top: 10px;
+      border-top: 1px dashed #ccc;
+    }
+    .subfolders h4 {
+      margin-bottom: 10px;
+    }
+    .subfolder {
+      width: 90%;
+      margin: 0 auto;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      margin-bottom: 10px;
+    }
+    .subfolder .folder-header {
+      background-color: #555;
+      padding: 8px;
+      font-size: 0.9rem;
+    }
+    .subfolder .folder-content {
+      padding: 8px;
+      font-size: 0.85rem;
+    }
+    /* Lab Duties list view styling */
+    #active-duties, #duty-schedule {
+      list-style: none;
+      margin: 10px 0;
+      padding: 0;
+    }
+    #active-duties li, #duty-schedule li {
+      background: #f7f7f7;
+      padding: 10px;
+      margin-bottom: 5px;
+      border: 1px solid #ddd;
+      border-radius: var(--border-radius);
+    }
+    /* Quick Share styles */
+    #quickshare-list {
+      list-style: none;
+      padding: 0;
+    }
+    #quickshare-list li {
+      padding: 8px;
+      border-bottom: 1px solid #eee;
+    }
+    /* Plasmid Visualization Modal */
+    #plasmid-visualization-modal {
+      display: none;
+      position: fixed;
+      top: 10%;
+      left: 10%;
+      width: 80%;
+      height: 80%;
+      background: white;
+      border: 2px solid #ccc;
+      border-radius: var(--border-radius);
+      z-index: 2000;
+      overflow: hidden;
+    }
+    #plasmid-map-container {
+      width: 100%;
+      height: 100%;
+      background: #fafafa url('https://via.placeholder.com/600x400?text=Plasmid+Map') center center no-repeat;
+      background-size: contain;
+      cursor: zoom-in;
+      transition: transform 0.2s;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Brockman Lab Inventory Management System</h1>
+  </header>
+  
+  <div class="container">
+    <!-- Main Tab Navigation (including Quick Share) -->
+    <div class="tabs">
+      <button class="tab active" data-tab="labsupplies">Lab Supplies</button>
+      <button class="tab" data-tab="geneengineering">Gene Engineering</button>
+      <button class="tab" data-tab="schedules">Schedules</button>
+      <button class="tab" data-tab="folders">Lab Folders</button>
+      <button class="tab" data-tab="quickshare">Quick Share</button>
+    </div>
+    
+    <!-- LAB SUPPLIES TAB -->
+    <div class="tab-content active" id="labsupplies">
+      <!-- Collapsible sections for General Lab Supplies, Chemicals & Reagents, and Low Stock Items -->
+      <div class="collapsible">
+        <div class="collapsible-header">General Lab Supplies</div>
+        <div class="collapsible-content">
+          <div class="action-bar">
+            <h2>General Lab Supplies <span class="item-count">(3 items)</span></h2>
+            <div>
+              <input type="text" class="search" placeholder="Search supplies..." />
+              <button id="add-general-btn">Add New Item</button>
+            </div>
+          </div>
+          <table class="inventory-table">
+            <thead>
+              <tr>
+                <th>S.No.</th>
+                <th>Product</th>
+                <th>Quantity</th>
+                <th>Supplier</th>
+                <th>Location</th>
+                <th>CAT#</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="inventory-row" data-id="gen1">
+                <td>1</td>
+                <td>Microcentrifuge Tubes (1.5mL)</td>
+                <td>500 pcs</td>
+                <td>Fisher Scientific</td>
+                <td>Cabinet A-3</td>
+                <td>05-408-129</td>
+              </tr>
+              <tr class="inventory-details" id="details-gen1">
+                <td colspan="6">
+                  <div class="detail-grid">
+                    <div class="detail-item">
+                      <div class="detail-label">Reorder Level:</div>
+                      <div>2 bottles</div>
+                    </div>
+                    <div class="detail-item">
+                      <div class="detail-label">Priority:</div>
+                      <div>Medium</div>
+                    </div>
+                    <div class="detail-item">
+                      <div class="detail-label">Status:</div>
+                      <div>Ordered</div>
+                    </div>
+                    <div class="detail-item">
+                      <div class="detail-label">Notes:</div>
+                      <div>Ordered on 02/20/2025. Expected delivery by 03/05/2025.</div>
+                    </div>
+                    <div class="detail-item">
+                      <div class="detail-label">Responsible Person:</div>
+                      <div>John Williams</div>
+                    </div>
+                  </div>
+                  <div style="text-align: right; margin-top: 10px;">
+                    <button class="delete-btn" data-id="gen1">Delete Item</button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      
+      <div class="collapsible">
+        <div class="collapsible-header">Chemicals &amp; Reagents</div>
+        <div class="collapsible-content">
+          <div class="action-bar">
+            <h2>Chemicals &amp; Reagents <span class="item-count">(3 items)</span></h2>
+            <div>
+              <input type="text" class="search" placeholder="Search chemicals..." />
+              <button id="add-chemical-btn">Add New Chemical</button>
+            </div>
+          </div>
+          <table class="inventory-table">
+            <thead>
+              <tr>
+                <th>S.No.</th>
+                <th>Product</th>
+                <th>Amount</th>
+                <th>Supplier</th>
+                <th>Location</th>
+                <th>CAS#</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="inventory-row" data-id="chem1">
+                <td>1</td>
+                <td>Tris Base</td>
+                <td>500g</td>
+                <td>Sigma-Aldrich</td>
+                <td>Chemical Cabinet 2</td>
+                <td>77-86-1</td>
+              </tr>
+              <tr class="inventory-details" id="details-chem1">
+                <td colspan="6">
+                  <div class="detail-grid">
+                    <div class="detail-item">
+                      <div class="detail-label">S.No.:</div>
+                      <div>1</div>
+                    </div>
+                    <div class="detail-item">
+                      <div class="detail-label">Product:</div>
+                      <div>Tris Base</div>
+                    </div>
+                    <div class="detail-item">
+                      <div class="detail-label">Amount:</div>
+                      <div>500g</div>
+                    </div>
+                    <div class="detail-item">
+                      <div class="detail-label">Unit Type:</div>
+                      <div>Powder</div>
+                    </div>
+                    <div class="detail-item">
+                      <div class="detail-label">Quantity:</div>
+                      <div>1 bottle</div>
+                    </div>
+                    <div class="detail-item">
+                      <div class="detail-label">CAS#:</div>
+                      <div>77-86-1</div>
+                    </div>
+                    <div class="detail-item">
+                      <div class="detail-label">Supplier:</div>
+                      <div>Sigma-Aldrich</div>
+                    </div>
+                    <div class="detail-item">
+                      <div class="detail-label">CAT#:</div>
+                      <div>T1503</div>
+                    </div>
+                    <div class="detail-item">
+                      <div class="detail-label">Location:</div>
+                      <div>Chemical Cabinet 2</div>
+                    </div>
+                    <div class="detail-item">
+                      <div class="detail-label">Notes:</div>
+                      <div>For buffer preparation. Opened on 01/15/2025.</div>
+                    </div>
+                    <div class="detail-item">
+                      <div class="detail-label">SDS:</div>
+                      <div><a href="#">View SDS</a></div>
+                    </div>
+                  </div>
+                  <div style="text-align: right; margin-top: 10px;">
+                    <button class="delete-btn" data-id="chem1">Delete Item</button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      
+      <div class="collapsible">
+        <div class="collapsible-header">Low Stock Items</div>
+        <div class="collapsible-content">
+          <div class="action-bar">
+            <h2>Low Stock Items <span class="item-count">(4 items)</span></h2>
+            <div>
+              <input type="text" class="search" placeholder="Search low stock items..." />
+              <button id="add-lowstock-btn">Add Low Stock Item</button>
+            </div>
+          </div>
+          <table class="inventory-table">
+            <thead>
+              <tr>
+                <th>Item</th>
+                <th>CAT#</th>
+                <th>Current Stock</th>
+                <th>Reorder Level</th>
+                <th>Priority</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="inventory-row" data-id="ls1">
+                <td>Serological Pipettes (10mL)</td>
+                <td>4488</td>
+                <td>20 pcs</td>
+                <td>50 pcs</td>
+                <td>High</td>
+                <td>Not Ordered</td>
+              </tr>
+              <tr class="inventory-details" id="details-ls1">
+                <td colspan="6">
+                  <div class="detail-grid">
+                    <div class="detail-item">
+                      <div class="detail-label">Item:</div>
+                      <div>Serological Pipettes (10mL)</div>
+                    </div>
+                    <div class="detail-item">
+                      <div class="detail-label">CAT#:</div>
+                      <div>4488</div>
+                    </div>
+                    <div class="detail-item">
+                      <div class="detail-label">Supplier:</div>
+                      <div>Corning</div>
+                    </div>
+                    <div class="detail-item">
+                      <div class="detail-label">Current Stock:</div>
+                      <div>20 pcs</div>
+                    </div>
+                    <div class="detail-item">
+                      <div class="detail-label">Reorder Level:</div>
+                      <div>50 pcs</div>
+                    </div>
+                    <div class="detail-item">
+                      <div class="detail-label">Priority:</div>
+                      <div>High</div>
+                    </div>
+                    <div class="detail-item">
+                      <div class="detail-label">Status:</div>
+                      <div>Not Ordered</div>
+                    </div>
+                    <div class="detail-item">
+                      <div class="detail-label">Notes:</div>
+                      <div>Needed for cell culture work next week. Order 200 pcs.</div>
+                    </div>
+                    <div class="detail-item">
+                      <div class="detail-label">Responsible Person:</div>
+                      <div>Dr. Smith</div>
+                    </div>
+                  </div>
+                  <div style="text-align: right; margin-top: 10px;">
+                    <button class="delete-btn" data-id="ls1">Delete Item</button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    
+    <!-- GENE ENGINEERING TAB -->
+    <div class="tab-content" id="geneengineering">
+      <div class="collapsible">
+        <div class="collapsible-header">Cell Lines</div>
+        <div class="collapsible-content">
+          <div class="action-bar">
+            <h2>Cell Lines <span class="item-count">(3 items)</span></h2>
+            <div>
+              <input type="text" class="search" placeholder="Search cell lines..." />
+              <button id="add-cellline-btn">Add New Cell Line</button>
+            </div>
+          </div>
+          <table class="inventory-table">
+            <thead>
+              <tr>
+                <th>CellLineID</th>
+                <th>Description</th>
+                <th>Genotype</th>
+                <th>Box Number</th>
+                <th>Passage #</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="inventory-row" data-id="cl1">
+                <td>CL001</td>
+                <td>HEK293T</td>
+                <td>Wild type</td>
+                <td>B12</td>
+                <td>P5</td>
+              </tr>
+              <tr class="inventory-details" id="details-cl1">
+                <td colspan="5">
+                  <div class="detail-grid">
+                    <div class="detail-item">
+                      <div class="detail-label">CellLineID:</div>
+                      <div>CL001</div>
+                    </div>
+                  </div>
+                  <div style="text-align: right; margin-top: 10px;">
+                    <button class="delete-btn" data-id="cl1">Delete Item</button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      
+      <div class="collapsible">
+        <div class="collapsible-header">Plasmids</div>
+        <div class="collapsible-content">
+          <div class="action-bar">
+            <h2>Plasmids <span class="item-count">(3 items)</span></h2>
+            <div>
+              <input type="text" class="search" placeholder="Search plasmids..." />
+              <button id="add-plasmid-btn">Add New Plasmid</button>
+            </div>
+          </div>
+          <table class="inventory-table">
+            <thead>
+              <tr>
+                <th>PlasmidID</th>
+                <th>Genotype</th>
+                <th>Backbone</th>
+                <th>Description</th>
+                <th>Addgene ID</th>
+                <th>Sequenced?</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="inventory-row" data-id="plasmid1">
+                <td>PL001</td>
+                <td>GFP-Kan</td>
+                <td>pET28a</td>
+                <td>GFP expression vector</td>
+                <td>12345</td>
+                <td>Yes</td>
+                <td>
+                  <button class="delete-btn" data-id="plasmid1">Delete</button>
+                  <button class="visualize-btn" data-id="plasmid1">Visualize</button>
+                </td>
+              </tr>
+              <tr class="inventory-details" id="details-plasmid1">
+                <td colspan="7">
+                  <div class="detail-grid">
+                    <div class="detail-item">
+                      <div class="detail-label">PlasmidID:</div>
+                      <div>PL001</div>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      
+      <div class="collapsible">
+        <div class="collapsible-header">Oligos</div>
+        <div class="collapsible-content">
+          <div class="action-bar">
+            <h2>Oligos <span class="item-count">(3 items)</span></h2>
+            <div>
+              <input type="text" class="search" placeholder="Search oligos..." />
+              <button id="add-oligo-btn">Add New Oligo</button>
+            </div>
+          </div>
+          <table class="inventory-table">
+            <thead>
+              <tr>
+                <th>OligoID</th>
+                <th>Sequence (5'-3')</th>
+                <th>Template DNA</th>
+                <th>Insert target</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="inventory-row" data-id="oligo1">
+                <td>OL001</td>
+                <td>ATCGTAGCTAGCTAGCTAG</td>
+                <td>pET28a</td>
+                <td>GFP</td>
+                <td>Forward primer for GFP cloning</td>
+              </tr>
+              <tr class="inventory-details" id="details-oligo1">
+                <td colspan="5">
+                  <div class="detail-grid">
+                    <div class="detail-item">
+                      <div class="detail-label">OligoID:</div>
+                      <div>OL001</div>
+                    </div>
+                  </div>
+                  <div style="text-align: right; margin-top: 10px;">
+                    <button class="delete-btn" data-id="oligo1">Delete Item</button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      
+      <div class="collapsible">
+        <div class="collapsible-header">Gene Blocks</div>
+        <div class="collapsible-content">
+          <div class="action-bar">
+            <h2>Gene Blocks <span class="item-count">(3 items)</span></h2>
+            <div>
+              <input type="text" class="search" placeholder="Search gene blocks..." />
+              <button id="add-geneblock-btn">Add New Gene Block</button>
+            </div>
+          </div>
+          <table class="inventory-table">
+            <thead>
+              <tr>
+                <th>GeneBlockID</th>
+                <th>Sequence</th>
+                <th>Gene</th>
+                <th>Final plasmid ID</th>
+                <th>Oligos?</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="inventory-row" data-id="gb1">
+                <td>GB001</td>
+                <td>ATCGATCGATCGTAGCTAGCTAG...</td>
+                <td>GFP-mut1</td>
+                <td>PL004</td>
+                <td>Yes</td>
+              </tr>
+              <tr class="inventory-details" id="details-gb1">
+                <td colspan="5">
+                  <div class="detail-grid">
+                    <div class="detail-item">
+                      <div class="detail-label">GeneBlockID:</div>
+                      <div>GB001</div>
+                    </div>
+                    <div class="detail-item">
+                      <div class="detail-label">Sequence:</div>
+                      <div class="full-sequence">ATCGATCGATCGTAGCTAGCTAGCGATCGATCGTAGCTAGCTATCGATCGATCGTAGCTAGCTAGCGATCGATCGTAGCTAGCTAGCTATCGATCGATCGTAGCTAGCTAGCGATCGATCGTAGCTAGCTATCGAT
+CGATCGATCGTAGCTAGCTAGCGATCGATCGTAGCTAGCTATCGATCGATCGTAGCTAGCTAGCGATCGATCGTAGCTAG</div>
+                    </div>
+                    <div class="detail-item">
+                      <div class="detail-label">Gene:</div>
+                      <div>GFP-mut1</div>
+                    </div>
+                    <div class="detail-item">
+                      <div class="detail-label">Final plasmid ID:</div>
+                      <div>PL004</div>
+                    </div>
+                    <div class="detail-item">
+                      <div class="detail-label">Oligos?:</div>
+                      <div>Yes (OL001, OL002)</div>
+                    </div>
+                    <div class="detail-item">
+                      <div class="detail-label">Notes:</div>
+                      <div>Enhanced brightness mutation. Synthesized by IDT on 01/10/2025.</div>
+                    </div>
+                  </div>
+                  <div style="text-align: right; margin-top: 10px;">
+                    <button class="delete-btn" data-id="gb1">Delete Item</button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    
+    <!-- SCHEDULES TAB -->
+    <div class="tab-content" id="schedules">
+      <div class="week-nav">
+        <button id="prev-week">←</button>
+        <span id="current-week">Week of February 24 - March 2, 2025</span>
+        <button id="next-week">→</button>
+      </div>
+      <!-- Microscope Schedule Section -->
+      <div class="collapsible">
+        <div class="collapsible-header">Microscope Schedule</div>
+        <div class="collapsible-content">
+          <div class="action-bar">
+            <h2>Microscope Schedule</h2>
+            <div>
+              <button id="add-booking-btn">Add New Booking</button>
+            </div>
+          </div>
+          <div style="margin-bottom: 20px;">
+            <h3 id="week-label">Week of February 24 - March 2, 2025</h3>
+          </div>
+          <div id="schedule-grid-container"></div>
+          <div id="booking-details" style="margin-top: 20px; background-color: white; padding: 15px; border-radius: 4px; display: none;">
+            <h3>Booking Details</h3>
+            <div id="booking-content"></div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Lab Duties Section -->
+      <div class="collapsible">
+        <div class="collapsible-header">Lab Duties</div>
+        <div class="collapsible-content">
+          <div class="action-bar">
+            <h2>Active Lab Duties</h2>
+            <div>
+              <input type="text" class="search" placeholder="Search lab duties..." />
+              <button id="add-labduty-btn">Add Lab Duty</button>
+            </div>
+          </div>
+          <p><strong>This Week's Duty Leader:</strong> Dr. Smith</p>
+        </div>
+      </div>
+      
+      <!-- Group Meeting Section -->
+      <div class="collapsible">
+        <div class="collapsible-header">Group Meeting</div>
+        <div class="collapsible-content">
+          <div class="action-bar">
+            <h2>Group Meeting Schedule</h2>
+            <div>
+              <button id="edit-groupmeeting-btn">Edit Group Meeting Schedule</button>
+            </div>
+          </div>
+          <table class="inventory-table">
+            <thead>
+              <tr>
+                <th>Week</th>
+                <th>Tuesday Presenter</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Week of Feb 24 - Mar 2, 2025</td>
+                <td><input type="text" value="Dr. Smith" /></td>
+              </tr>
+              <tr>
+                <td>Week of Mar 3 - Mar 9, 2025</td>
+                <td><input type="text" value="John Williams" /></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    
+    <!-- LAB FOLDERS TAB -->
+    <div class="tab-content" id="folders">
+      <div class="action-bar">
+        <h2>Lab Member Folders <span class="item-count">(3 folders)</span></h2>
+        <div>
+          <input type="text" class="search" placeholder="Search folders..." />
+          <button id="add-folder-btn">Add New Folder</button>
+          <button id="folder-view-toggle">Toggle List View</button>
+        </div>
+      </div>
+      <div class="folders-container">
+        <div class="lab-folder">
+          <div class="folder-header">
+            <h3>Dr. Smith</h3>
+            <span style="cursor: pointer; font-size: 20px;">⌵</span>
+          </div>
+          <div class="folder-content">
+            <div style="margin-bottom: 15px;">
+              <button style="width: 100%; margin-bottom: 10px;">Add Files</button>
+              <p><strong>Created:</strong> 01/15/2025</p>
+              <p><strong>Files:</strong> 12</p>
+            </div>
+            <div style="border-top: 1px solid #ddd; padding-top: 10px;">
+              <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee;">
+                <span>Protocol-PCR.docx</span>
+                <button style="padding: 2px 8px; font-size: 12px;">Delete</button>
+              </div>
+            </div>
+            <div class="subfolders">
+              <h4>Subfolders</h4>
+              <div class="subfolder-list">
+                <div class="lab-folder subfolder">
+                  <div class="folder-header">
+                    <h4>Subfolder Example</h4>
+                    <span style="cursor: pointer; font-size: 16px;">⌵</span>
+                  </div>
+                  <div class="folder-content">
+                    <p>No files yet.</p>
+                  </div>
+                </div>
+              </div>
+              <button class="add-subfolder-btn">Add Subfolder</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- QUICK SHARE TAB -->
+    <div class="tab-content" id="quickshare">
+      <div class="action-bar">
+        <h2>Quick Share</h2>
+        <div>
+          <form id="quickshare-form">
+            <input type="file" id="quickshare-file" accept="*/*" required />
+            <button type="submit">Share File</button>
+          </form>
+        </div>
+      </div>
+      <h3>Shared Files (click to download; file is removed upon download)</h3>
+      <ul id="quickshare-list"></ul>
+    </div>
+    
+  </div>
+  
+  <!-- MODALS -->
+  <!-- Add General Lab Supply Modal -->
+  <div id="general-modal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h2>Add New General Lab Supply</h2>
+      <div class="success-message" id="general-success">Item added successfully!</div>
+      <form id="general-form">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="general-sno">S.No.</label>
+            <input type="text" id="general-sno" required />
+          </div>
+          <div class="form-group">
+            <label for="general-product">Product</label>
+            <input type="text" id="general-product" required />
+          </div>
+          <div class="form-group">
+            <label for="general-quantity">Quantity</label>
+            <input type="text" id="general-quantity" required />
+          </div>
+          <div class="form-group">
+            <label for="general-supplier">Supplier</label>
+            <input type="text" id="general-supplier" required />
+          </div>
+          <div class="form-group">
+            <label for="general-cat">CAT#</label>
+            <input type="text" id="general-cat" />
+          </div>
+          <div class="form-group">
+            <label for="general-location">Location</label>
+            <input type="text" id="general-location" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="general-notes">Notes</label>
+          <textarea id="general-notes"></textarea>
+        </div>
+        <button type="submit">Add Item</button>
+      </form>
+    </div>
+  </div>
+  
+  <!-- Add Chemical Modal -->
+  <div id="chemical-modal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h2>Add New Chemical or Reagent</h2>
+      <div class="success-message" id="chemical-success">Item added successfully!</div>
+      <form id="chemical-form">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="chemical-sno">S.No.</label>
+            <input type="text" id="chemical-sno" required />
+          </div>
+          <div class="form-group">
+            <label for="chemical-product">Product</label>
+            <input type="text" id="chemical-product" required />
+          </div>
+          <div class="form-group">
+            <label for="chemical-amount">Amount</label>
+            <input type="text" id="chemical-amount" required />
+          </div>
+          <div class="form-group">
+            <label for="chemical-unit">Unit Type</label>
+            <select id="chemical-unit" required>
+              <option value="">Select Unit Type</option>
+              <option value="Powder">Powder</option>
+              <option value="Liquid">Liquid</option>
+              <option value="Solution">Solution</option>
+              <option value="Solid">Solid</option>
+              <option value="Gas">Gas</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="chemical-quantity">Quantity</label>
+            <input type="text" id="chemical-quantity" required />
+          </div>
+          <div class="form-group">
+            <label for="chemical-cas">CAS#</label>
+            <input type="text" id="chemical-cas" />
+          </div>
+          <div class="form-group">
+            <label for="chemical-supplier">Supplier</label>
+            <input type="text" id="chemical-supplier" required />
+          </div>
+          <div class="form-group">
+            <label for="chemical-cat">CAT#</label>
+            <input type="text" id="chemical-cat" />
+          </div>
+          <div class="form-group">
+            <label for="chemical-location">Location</label>
+            <input type="text" id="chemical-location" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="chemical-notes">Notes</label>
+          <textarea id="chemical-notes"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="chemical-sds">SDS (File or Link)</label>
+          <input type="file" id="chemical-sds" />
+        </div>
+        <button type="submit">Add Item</button>
+      </form>
+    </div>
+  </div>
+  
+  <!-- Add Oligo Modal -->
+  <div id="oligo-modal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h2>Add New Oligo</h2>
+      <div class="success-message" id="oligo-success">Item added successfully!</div>
+      <form id="oligo-form">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="oligo-id">OligoID</label>
+            <input type="text" id="oligo-id" required />
+          </div>
+          <div class="form-group">
+            <label for="oligo-sequence">Sequence (5'-3')</label>
+            <input type="text" id="oligo-sequence" required />
+          </div>
+          <div class="form-group">
+            <label for="oligo-template">Template DNA</label>
+            <input type="text" id="oligo-template" />
+          </div>
+          <div class="form-group">
+            <label for="oligo-target">Insert target</label>
+            <input type="text" id="oligo-target" />
+          </div>
+          <div class="form-group">
+            <label for="oligo-description">Description</label>
+            <input type="text" id="oligo-description" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="oligo-notes">Notes</label>
+          <textarea id="oligo-notes"></textarea>
+        </div>
+        <button type="submit">Add Item</button>
+      </form>
+    </div>
+  </div>
+  
+  <!-- Add Plasmid Modal (with file upload and Visualize option) -->
+  <div id="plasmid-modal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h2>Add New Plasmid</h2>
+      <div class="success-message" id="plasmid-success">Item added successfully!</div>
+      <form id="plasmid-form">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="plasmid-id">PlasmidID</label>
+            <input type="text" id="plasmid-id" required />
+          </div>
+          <div class="form-group">
+            <label for="plasmid-genotype">Genotype</label>
+            <input type="text" id="plasmid-genotype" required />
+          </div>
+          <div class="form-group">
+            <label for="plasmid-backbone">Backbone</label>
+            <input type="text" id="plasmid-backbone" required />
+          </div>
+          <div class="form-group">
+            <label for="plasmid-description">Description</label>
+            <input type="text" id="plasmid-description" />
+          </div>
+          <div class="form-group">
+            <label for="plasmid-catalog">CatalogID (Addgene)</label>
+            <input type="text" id="plasmid-catalog" />
+          </div>
+          <div class="form-group">
+            <label for="plasmid-sequenced">Sequenced?</label>
+            <select id="plasmid-sequenced">
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="plasmid-file">Plasmid File</label>
+            <input type="file" id="plasmid-file" accept="*/*" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="plasmid-notes">Notes</label>
+          <textarea id="plasmid-notes"></textarea>
+        </div>
+        <button type="submit">Add Item</button>
+      </form>
+    </div>
+  </div>
+  
+  <!-- Add Plasmid Visualization Modal -->
+  <div id="plasmid-visualization-modal" class="modal">
+    <div class="modal-content" style="padding: 0; position: relative;">
+      <span class="close" id="plasmid-map-close" style="position: absolute; top: 10px; right: 20px; cursor: pointer;">&times;</span>
+      <div id="plasmid-map-container"></div>
+    </div>
+  </div>
+  
+  <!-- Add Gene Block Modal -->
+  <div id="geneblock-modal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h2>Add New Gene Block</h2>
+      <div class="success-message" id="geneblock-success">Item added successfully!</div>
+      <form id="geneblock-form">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="geneblock-id">GeneBlockID</label>
+            <input type="text" id="geneblock-id" required />
+          </div>
+          <div class="form-group">
+            <label for="geneblock-sequence">Sequence</label>
+            <textarea id="geneblock-sequence" required style="height: 300px;"></textarea>
+          </div>
+          <div class="form-group">
+            <label for="geneblock-gene">Gene</label>
+            <input type="text" id="geneblock-gene" required />
+          </div>
+          <div class="form-group">
+            <label for="geneblock-plasmid">Final plasmid ID</label>
+            <input type="text" id="geneblock-plasmid" />
+          </div>
+          <div class="form-group">
+            <label for="geneblock-oligos">Oligos?</label>
+            <select id="geneblock-oligos">
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="geneblock-notes">Notes</label>
+          <textarea id="geneblock-notes"></textarea>
+        </div>
+        <button type="submit">Add Item</button>
+      </form>
+    </div>
+  </div>
+  
+  <!-- Add Cell Line Modal -->
+  <div id="cellline-modal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h2>Add New Cell Line</h2>
+      <div class="success-message" id="cellline-success">Cell line added successfully!</div>
+      <form id="cellline-form">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="cellline-id">CellLineID</label>
+            <input type="text" id="cellline-id" required />
+          </div>
+          <div class="form-group">
+            <label for="cellline-description">Description</label>
+            <input type="text" id="cellline-description" required />
+          </div>
+          <div class="form-group">
+            <label for="cellline-genotype">Genotype</label>
+            <input type="text" id="cellline-genotype" required />
+          </div>
+          <div class="form-group">
+            <label for="cellline-box">Box Number</label>
+            <input type="text" id="cellline-box" required />
+          </div>
+          <div class="form-group">
+            <label for="cellline-passage">Passage #</label>
+            <input type="text" id="cellline-passage" required />
+          </div>
+          <div class="form-group">
+            <label for="cellline-date">Cryopreservation Date</label>
+            <input type="date" id="cellline-date" required />
+          </div>
+          <div class="form-group">
+            <label for="cellline-location">Freezer Location</label>
+            <input type="text" id="cellline-location" required />
+          </div>
+          <div class="form-group">
+            <label for="cellline-medium">Growth Medium</label>
+            <input type="text" id="cellline-medium" required />
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="cellline-notes">Notes</label>
+          <textarea id="cellline-notes"></textarea>
+        </div>
+        <button type="submit">Add Cell Line</button>
+      </form>
+    </div>
+  </div>
+  
+  <!-- Add Low Stock Item Modal -->
+  <div id="lowstock-modal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h2>Add Low Stock Item</h2>
+      <div class="success-message" id="lowstock-success">Item added successfully!</div>
+      <form id="lowstock-form">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="lowstock-item">Item</label>
+            <input type="text" id="lowstock-item" required />
+          </div>
+          <div class="form-group">
+            <label for="lowstock-cat">CAT#</label>
+            <input type="text" id="lowstock-cat" required />
+          </div>
+          <div class="form-group">
+            <label for="lowstock-supplier">Supplier</label>
+            <input type="text" id="lowstock-supplier" required />
+          </div>
+          <div class="form-group">
+            <label for="lowstock-current">Current Stock</label>
+            <input type="text" id="lowstock-current" required />
+          </div>
+          <div class="form-group">
+            <label for="lowstock-reorder">Reorder Level</label>
+            <input type="text" id="lowstock-reorder" required />
+          </div>
+          <div class="form-group">
+            <label for="lowstock-priority">Priority</label>
+            <select id="lowstock-priority" required>
+              <option value="High">High</option>
+              <option value="Medium">Medium</option>
+              <option value="Low">Low</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="lowstock-status">Status</label>
+            <select id="lowstock-status" required>
+              <option value="Not Ordered">Not Ordered</option>
+              <option value="Ordered">Ordered</option>
+              <option value="Backordered">Backordered</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="lowstock-person">Responsible Person</label>
+            <input type="text" id="lowstock-person" required />
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="lowstock-notes">Notes</label>
+          <textarea id="lowstock-notes"></textarea>
+        </div>
+        <button type="submit">Add Low Stock Item</button>
+      </form>
+    </div>
+  </div>
+  
+  <!-- Add Lab Duty Modal -->
+  <div id="labduty-modal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h2>Add Lab Duty</h2>
+      <div class="success-message" id="labduty-success">Lab duty added successfully!</div>
+      <form id="labduty-form">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="labduty-name">LabDutyName</label>
+            <input type="text" id="labduty-name" required />
+          </div>
+          <div class="form-group">
+            <label for="labduty-person">Person</label>
+            <input type="text" id="labduty-person" required />
+          </div>
+          <div class="form-group">
+            <label for="labduty-week">Week</label>
+            <input type="text" id="labduty-week" required placeholder="e.g. Feb 24 - Mar 2" />
+          </div>
+          <div class="form-group">
+            <label for="labduty-status">Status</label>
+            <select id="labduty-status" required>
+              <option value="Pending">Pending</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Completed">Completed</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="labduty-frequency">Frequency</label>
+            <select id="labduty-frequency" required>
+              <option value="Daily">Daily</option>
+              <option value="Weekly">Weekly</option>
+              <option value="Biweekly">Biweekly</option>
+              <option value="Monthly">Monthly</option>
+              <option value="Quarterly">Quarterly</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="labduty-next">Next Rotation</label>
+            <input type="text" id="labduty-next" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="labduty-description">Description</label>
+          <textarea id="labduty-description" required></textarea>
+        </div>
+        <div class="form-group">
+          <label for="labduty-notes">Notes</label>
+          <textarea id="labduty-notes"></textarea>
+        </div>
+        <button type="submit">Add Lab Duty</button>
+      </form>
+    </div>
+  </div>
+  
+  <!-- Add Microscope Booking Modal (with 15-min intervals, End Time and Recurring options) -->
+  <div id="booking-modal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h2>Add New Microscope Booking</h2>
+      <div class="success-message" id="booking-success">Booking added successfully!</div>
+      <form id="booking-form">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="booking-person">Person</label>
+            <input type="text" id="booking-person" required />
+          </div>
+          <div class="form-group">
+            <label for="booking-date">Date</label>
+            <input type="date" id="booking-date" required />
+          </div>
+          <div class="form-group">
+            <label for="booking-start">Start Time</label>
+            <select id="booking-start" required>
+              <option value="08:00">08:00</option>
+              <option value="08:15">08:15</option>
+              <option value="08:30">08:30</option>
+              <option value="08:45">08:45</option>
+              <option value="09:00">09:00</option>
+              <!-- ... additional options ... -->
+              <option value="21:45">21:45</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="booking-end">End Time</label>
+            <select id="booking-end" required>
+              <option value="08:15">08:15</option>
+              <option value="08:30">08:30</option>
+              <option value="08:45">08:45</option>
+              <option value="09:00">09:00</option>
+              <!-- ... additional options ... -->
+              <option value="22:00">22:00</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="booking-microscope">Microscope Type</label>
+            <select id="booking-microscope" required>
+              <option value="Confocal">Confocal</option>
+              <option value="Fluorescence">Fluorescence</option>
+              <option value="Light">Light</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="booking-experiment">Experiment Description</label>
+          <textarea id="booking-experiment" required></textarea>
+        </div>
+        <div class="form-group">
+          <label for="booking-recurring">Recurring?</label>
+          <input type="checkbox" id="booking-recurring" />
+        </div>
+        <div id="recurrence-options" style="display: none;">
+          <div class="form-group">
+            <label for="booking-recurrence">Recurrence Pattern</label>
+            <select id="booking-recurrence">
+              <option value="daily">Daily</option>
+              <option value="weekly">Weekly</option>
+              <option value="monthly">Monthly</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="booking-recur-end">Recurrence End Date</label>
+            <input type="date" id="booking-recur-end" />
+          </div>
+        </div>
+        <button type="submit">Add Booking</button>
+      </form>
+    </div>
+  </div>
+  
+  <!-- Add Folder Modal -->
+  <div id="folder-modal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h2>Create New Lab Folder</h2>
+      <div class="success-message" id="folder-success">Folder created successfully!</div>
+      <form id="folder-form">
+        <div class="form-group">
+          <label for="folder-name">Lab Member Name</label>
+          <input type="text" id="folder-name" required />
+        </div>
+        <div class="form-group">
+          <label for="folder-access">Access Level</label>
+          <select id="folder-access">
+            <option value="owner-edit">Owner Edit Only</option>
+            <option value="all-edit">All Members Edit</option>
+            <option value="public-view">Public View Only</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="folder-description">Folder Description</label>
+          <textarea id="folder-description"></textarea>
+        </div>
+        <button type="submit">Create Folder</button>
+      </form>
+    </div>
+  </div>
+  
+  <!-- Add Subfolder Modal -->
+  <div id="subfolder-modal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h2>Create New Subfolder</h2>
+      <div class="success-message" id="subfolder-success">Subfolder created successfully!</div>
+      <form id="subfolder-form">
+        <div class="form-group">
+          <label for="subfolder-name">Subfolder Name</label>
+          <input type="text" id="subfolder-name" required />
+        </div>
+        <div class="form-group">
+          <label for="subfolder-description">Description</label>
+          <textarea id="subfolder-description"></textarea>
+        </div>
+        <button type="submit">Create Subfolder</button>
+      </form>
+    </div>
+  </div>
+  
+  <script>
+    // Tab switching functionality
+    const tabs = document.querySelectorAll('.tab');
+    const tabContents = document.querySelectorAll('.tab-content');
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const tabId = tab.getAttribute('data-tab');
+        tabs.forEach(t => t.classList.remove('active'));
+        tabContents.forEach(content => content.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById(tabId).classList.add('active');
+      });
+    });
+    
+    // Collapsible group functionality
+    const collapsibleHeaders = document.querySelectorAll('.collapsible-header');
+    collapsibleHeaders.forEach(header => {
+      header.addEventListener('click', () => {
+        const content = header.nextElementSibling;
+        content.style.display = (content.style.display === 'none' || content.style.display === '') ? 'block' : 'none';
+      });
+    });
+    
+    // Expand/collapse inventory rows
+    const inventoryRows = document.querySelectorAll('.inventory-row');
+    inventoryRows.forEach(row => {
+      row.addEventListener('click', () => {
+        const detailsId = 'details-' + row.getAttribute('data-id');
+        const detailsRow = document.getElementById(detailsId);
+        if (detailsRow.style.display === 'table-row') {
+          detailsRow.style.display = 'none';
+        } else {
+          detailsRow.style.display = 'table-row';
+        }
+      });
+    });
+    
+    // Modal functionality
+    const modals = {
+      general: document.getElementById('general-modal'),
+      chemical: document.getElementById('chemical-modal'),
+      oligo: document.getElementById('oligo-modal'),
+      plasmid: document.getElementById('plasmid-modal'),
+      geneblock: document.getElementById('geneblock-modal'),
+      cellline: document.getElementById('cellline-modal'),
+      lowstock: document.getElementById('lowstock-modal'),
+      labduty: document.getElementById('labduty-modal'),
+      booking: document.getElementById('booking-modal'),
+      folder: document.getElementById('folder-modal'),
+      subfolder: document.getElementById('subfolder-modal'),
+      plasmidMap: document.getElementById('plasmid-visualization-modal')
+    };
+    const openButtons = {
+      general: document.getElementById('add-general-btn'),
+      chemical: document.getElementById('add-chemical-btn'),
+      oligo: document.getElementById('add-oligo-btn'),
+      plasmid: document.getElementById('add-plasmid-btn'),
+      geneblock: document.getElementById('add-geneblock-btn'),
+      cellline: document.getElementById('add-cellline-btn'),
+      lowstock: document.getElementById('add-lowstock-btn'),
+      labduty: document.getElementById('add-labduty-btn'),
+      booking: document.getElementById('add-booking-btn'),
+      folder: document.getElementById('add-folder-btn')
+    };
+    // For subfolder buttons:
+    const subfolderButtons = document.querySelectorAll('.add-subfolder-btn');
+    Object.keys(openButtons).forEach(key => {
+      if (openButtons[key]) {
+        openButtons[key].addEventListener('click', () => {
+          modals[key].style.display = 'block';
+        });
+      }
+    });
+    subfolderButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        modals.subfolder.style.display = 'block';
+      });
+    });
+    const closeButtons = document.querySelectorAll('.close');
+    closeButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        const modal = button.closest('.modal');
+        modal.style.display = 'none';
+      });
+    });
+    window.addEventListener('click', (event) => {
+      Object.values(modals).forEach(modal => {
+        if (event.target === modal) {
+          modal.style.display = 'none';
+        }
+      });
+    });
+    
+    // Form submission handlers (simulate success)
+    const forms = {
+      general: document.getElementById('general-form'),
+      chemical: document.getElementById('chemical-form'),
+      oligo: document.getElementById('oligo-form'),
+      plasmid: document.getElementById('plasmid-form'),
+      geneblock: document.getElementById('geneblock-form'),
+      cellline: document.getElementById('cellline-form'),
+      lowstock: document.getElementById('lowstock-form'),
+      labduty: document.getElementById('labduty-form'),
+      booking: document.getElementById('booking-form'),
+      folder: document.getElementById('folder-form'),
+      subfolder: document.getElementById('subfolder-form')
+    };
+    const successMessages = {
+      general: document.getElementById('general-success'),
+      chemical: document.getElementById('chemical-success'),
+      oligo: document.getElementById('oligo-success'),
+      plasmid: document.getElementById('plasmid-success'),
+      geneblock: document.getElementById('geneblock-success'),
+      cellline: document.getElementById('cellline-success'),
+      lowstock: document.getElementById('lowstock-success'),
+      labduty: document.getElementById('labduty-success'),
+      booking: document.getElementById('booking-success'),
+      folder: document.getElementById('folder-success'),
+      subfolder: document.getElementById('subfolder-success')
+    };
+    Object.keys(forms).forEach(key => {
+      if (forms[key]) {
+        forms[key].addEventListener('submit', (e) => {
+          e.preventDefault();
+          successMessages[key].style.display = 'block';
+          setTimeout(() => {
+            successMessages[key].style.display = 'none';
+            modals[key].style.display = 'none';
+            forms[key].reset();
+          }, 2000);
+        });
+      }
+    });
+    
+    // Booking recurrence options
+    const recurringCheckbox = document.getElementById('booking-recurring');
+    const recurrenceOptions = document.getElementById('recurrence-options');
+    recurringCheckbox.addEventListener('change', () => {
+      recurrenceOptions.style.display = recurringCheckbox.checked ? 'block' : 'none';
+    });
+    
+    // Schedule navigation: week arrows (dummy behavior)
+    const prevWeekBtn = document.getElementById('prev-week');
+    const nextWeekBtn = document.getElementById('next-week');
+    const weekLabel = document.getElementById('week-label');
+    const currentWeekSpan = document.getElementById('current-week');
+    let currentWeekIndex = 0;
+    const weeks = [
+      "Week of February 17 - February 23, 2025",
+      "Week of February 24 - March 2, 2025",
+      "Week of March 3 - March 9, 2025"
+    ];
+    prevWeekBtn.addEventListener('click', () => {
+      if (currentWeekIndex > 0) {
+        currentWeekIndex--;
+        currentWeekSpan.textContent = weeks[currentWeekIndex];
+        weekLabel.textContent = weeks[currentWeekIndex];
+      }
+    });
+    nextWeekBtn.addEventListener('click', () => {
+      if (currentWeekIndex < weeks.length - 1) {
+        currentWeekIndex++;
+        currentWeekSpan.textContent = weeks[currentWeekIndex];
+        weekLabel.textContent = weeks[currentWeekIndex];
+      }
+    });
+    
+    // Dynamically generate schedule grid for 15-min intervals from 08:00 to 22:00
+    function generateScheduleGrid() {
+      const container = document.getElementById('schedule-grid-container');
+      container.innerHTML = "";
+      const table = document.createElement('table');
+      table.className = "schedule-grid";
+      const thead = document.createElement('thead');
+      const headerRow = document.createElement('tr');
+      const timeHeader = document.createElement('th');
+      timeHeader.textContent = "Time";
+      headerRow.appendChild(timeHeader);
+      const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+      days.forEach(day => {
+        const th = document.createElement('th');
+        th.textContent = day;
+        headerRow.appendChild(th);
+      });
+      thead.appendChild(headerRow);
+      table.appendChild(thead);
+      const tbody = document.createElement('tbody');
+      for (let minutes = 480; minutes < 1320; minutes += 15) {
+        const row = document.createElement('tr');
+        const timeCell = document.createElement('td');
+        timeCell.className = "schedule-time";
+        timeCell.textContent = formatTime(minutes);
+        row.appendChild(timeCell);
+        for (let d = 0; d < 7; d++) {
+          const cell = document.createElement('td');
+          cell.className = "schedule-cell";
+          cell.dataset.start = minutes;
+          cell.dataset.day = d;
+          cell.addEventListener('mousedown', scheduleCellMouseDown);
+          cell.addEventListener('mouseenter', scheduleCellMouseEnter);
+          cell.addEventListener('mouseup', scheduleCellMouseUp);
+          row.appendChild(cell);
+        }
+        tbody.appendChild(row);
+      }
+      table.appendChild(tbody);
+      container.appendChild(table);
+    }
+    
+    function formatTime(totalMinutes) {
+      const hours = Math.floor(totalMinutes / 60);
+      const mins = totalMinutes % 60;
+      return (hours < 10 ? "0" + hours : hours) + ":" + (mins < 10 ? "0" + mins : mins);
+    }
+    
+    let isSelecting = false;
+    let selectionStart = null;
+    let selectedCells = [];
+    
+    function scheduleCellMouseDown(e) {
+      isSelecting = true;
+      clearSelection();
+      e.target.classList.add('selected');
+      selectedCells.push(e.target);
+      selectionStart = e.target;
+    }
+    
+    function scheduleCellMouseEnter(e) {
+      if (isSelecting) {
+        e.target.classList.add('selected');
+        if (!selectedCells.includes(e.target)) {
+          selectedCells.push(e.target);
+        }
+      }
+    }
+    
+    function scheduleCellMouseUp(e) {
+      if (isSelecting) {
+        isSelecting = false;
+        const times = selectedCells.map(cell => parseInt(cell.dataset.start));
+        const minTime = Math.min(...times);
+        const maxTime = Math.max(...times) + 15;
+        console.log("Selected time slot:", formatTime(minTime), "to", formatTime(maxTime));
+      }
+    }
+    
+    function clearSelection() {
+      selectedCells.forEach(cell => cell.classList.remove('selected'));
+      selectedCells = [];
+    }
+    
+    generateScheduleGrid();
+    
+    // Quick Share functionality
+    document.getElementById('quickshare-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const fileInput = document.getElementById('quickshare-file');
+      const file = fileInput.files[0];
+      if (file) {
+        const li = document.createElement('li');
+        const downloadLink = document.createElement('a');
+        downloadLink.href = URL.createObjectURL(file);
+        downloadLink.download = file.name;
+        downloadLink.textContent = file.name;
+        downloadLink.addEventListener('click', function(e) {
+          setTimeout(() => {
+            li.remove();
+          }, 1000);
+        });
+        li.appendChild(downloadLink);
+        document.getElementById('quickshare-list').appendChild(li);
+        fileInput.value = "";
+      }
+    });
+    
+    // Visualize plasmid map functionality
+    const visualizeButtons = document.querySelectorAll('.visualize-btn');
+    visualizeButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        modals.plasmidMap.style.display = 'block';
+        currentScale = 1;
+        plasmidMapContainer.style.transform = `scale(${currentScale})`;
+      });
+    });
+    const plasmidMapContainer = document.getElementById('plasmid-map-container');
+    let currentScale = 1;
+    plasmidMapContainer.addEventListener('wheel', function(e) {
+      e.preventDefault();
+      if (e.deltaY < 0) {
+        currentScale *= 1.1;
+      } else {
+        currentScale /= 1.1;
+      }
+      plasmidMapContainer.style.transform = `scale(${currentScale})`;
+    });
+    document.getElementById('plasmid-map-close').addEventListener('click', () => {
+      modals.plasmidMap.style.display = 'none';
+    });
+    
+    // Ctrl+F: focus search in active tab
+    document.addEventListener('keydown', function(e) {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+        e.preventDefault();
+        const activeTab = document.querySelector('.tab-content.active');
+        if (activeTab) {
+          const searchInput = activeTab.querySelector('.search');
+          if (searchInput) searchInput.focus();
+        }
+      }
+    });
+    
+    // Search functionality for each tab
+    const searchInputs = document.querySelectorAll('.search');
+    searchInputs.forEach(input => {
+      input.addEventListener('keyup', () => {
+        const searchTerm = input.value.toLowerCase();
+        const tabContent = input.closest('.tab-content');
+        const rows = tabContent.querySelectorAll('.inventory-row');
+        if (rows.length > 0) {
+          rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            const detailsId = 'details-' + row.getAttribute('data-id');
+            const detailsRow = document.getElementById(detailsId);
+            if (text.includes(searchTerm)) {
+              row.style.display = 'table-row';
+              if (detailsRow) {
+                const detailsText = detailsRow.textContent.toLowerCase();
+                detailsRow.style.display = detailsText.includes(searchTerm) && !text.includes(searchTerm) ? 'table-row' : 'none';
+              }
+            } else {
+              if (detailsRow && detailsRow.textContent.toLowerCase().includes(searchTerm)) {
+                row.style.display = 'table-row';
+                detailsRow.style.display = 'table-row';
+              } else {
+                row.style.display = 'none';
+                if (detailsRow) detailsRow.style.display = 'none';
+              }
+            }
+          });
+        }
+        const cards = tabContent.querySelectorAll('.lab-folder');
+        if (cards.length > 0) {
+          cards.forEach(card => {
+            const text = card.textContent.toLowerCase();
+            card.style.display = text.includes(searchTerm) ? 'block' : 'none';
+          });
+        }
+      });
+    });
+    
+    // Folder expansion/collapse (for folders and subfolders)
+    const folderHeaders = document.querySelectorAll('.folder-header');
+    folderHeaders.forEach(header => {
+      header.addEventListener('click', () => {
+        const content = header.nextElementSibling;
+        content.style.display = (content.style.display === 'none' || content.style.display === '') ? 'block' : 'none';
+      });
+    });
+    
+    // Toggle Folder List View
+    const folderViewToggle = document.getElementById('folder-view-toggle');
+    folderViewToggle.addEventListener('click', () => {
+      document.querySelector('.folders-container').classList.toggle('list-view');
+    });
+  </script>
+</body>
+</html>
