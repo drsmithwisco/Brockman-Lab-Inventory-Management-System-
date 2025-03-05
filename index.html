@@ -4,6 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Brockman Lab Inventory Management System</title>
+  <!-- SweetAlert2 CSS and JS -->
+  <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <!-- BioJS-Vis-Plasmid Library -->
+  <script src="https://cdn.jsdelivr.net/npm/biojs-vis-plasmid@0.3.2/dist/biojs-vis-plasmid.min.js"></script>
   <style>
     :root {
       --primary-color: #c5050c;
@@ -142,22 +147,16 @@
       cursor: pointer;
       margin-left: 10px;
     }
-    .sequence-display {
+    .sequence-display, .full-sequence {
       white-space: pre-wrap;
       word-break: break-all;
       padding: 8px;
       border-radius: 4px;
       border: 1px solid #ddd;
+    }
+    .sequence-display {
       max-height: 150px;
       overflow-y: auto;
-    }
-    /* For Gene Blocks, show full sequence */
-    .full-sequence {
-      white-space: pre-wrap;
-      word-break: break-all;
-      padding: 8px;
-      border-radius: 4px;
-      border: 1px solid #ddd;
     }
     .detail-grid {
       display: grid;
@@ -247,12 +246,7 @@
       padding: 5px;
       font-size: 0.8rem;
     }
-    .schedule-header {
-      background-color: var(--secondary-color);
-      color: white;
-      font-weight: bold;
-    }
-    .schedule-time {
+    .schedule-header, .schedule-time {
       background-color: var(--secondary-color);
       color: white;
       font-weight: bold;
@@ -268,7 +262,6 @@
     .schedule-cell.selected {
       background-color: lightblue;
     }
-    /* Week navigation arrows for schedules */
     .week-nav {
       display: flex;
       justify-content: center;
@@ -278,7 +271,6 @@
     .week-nav button {
       margin: 0 10px;
     }
-    /* Collapsible groups for sections */
     .collapsible-header {
       background-color: #ddd;
       padding: 10px;
@@ -293,7 +285,6 @@
       border-top: none;
       margin-bottom: 10px;
     }
-    /* Lab Folders: grid vs list view */
     .list-view .lab-folder {
       width: 100%;
     }
@@ -321,7 +312,6 @@
     .folder-content {
       padding: 15px;
     }
-    /* Subfolders styling */
     .subfolders {
       margin-top: 15px;
       padding-top: 10px;
@@ -346,7 +336,6 @@
       padding: 8px;
       font-size: 0.85rem;
     }
-    /* Lab Duties list view styling */
     #active-duties, #duty-schedule {
       list-style: none;
       margin: 10px 0;
@@ -359,7 +348,6 @@
       border: 1px solid #ddd;
       border-radius: var(--border-radius);
     }
-    /* Quick Share styles */
     #quickshare-list {
       list-style: none;
       padding: 0;
@@ -368,7 +356,6 @@
       padding: 8px;
       border-bottom: 1px solid #eee;
     }
-    /* Plasmid Visualization Modal */
     #plasmid-visualization-modal {
       display: none;
       position: fixed;
@@ -385,9 +372,8 @@
     #plasmid-map-container {
       width: 100%;
       height: 100%;
-      background: #fafafa url('https://via.placeholder.com/600x400?text=Plasmid+Map') center center no-repeat;
-      background-size: contain;
-      cursor: zoom-in;
+      background: #fafafa;
+      cursor: grab;
       transition: transform 0.2s;
     }
   </style>
@@ -398,7 +384,7 @@
   </header>
   
   <div class="container">
-    <!-- Main Tab Navigation (including Quick Share) -->
+    <!-- Main Tab Navigation -->
     <div class="tabs">
       <button class="tab active" data-tab="labsupplies">Lab Supplies</button>
       <button class="tab" data-tab="geneengineering">Gene Engineering</button>
@@ -409,18 +395,18 @@
     
     <!-- LAB SUPPLIES TAB -->
     <div class="tab-content active" id="labsupplies">
-      <!-- Collapsible sections for General Lab Supplies, Chemicals & Reagents, and Low Stock Items -->
+      <!-- Collapsible for General Lab Supplies -->
       <div class="collapsible">
         <div class="collapsible-header">General Lab Supplies</div>
         <div class="collapsible-content">
           <div class="action-bar">
-            <h2>General Lab Supplies <span class="item-count">(3 items)</span></h2>
+            <h2>General Lab Supplies <span class="item-count">(0 items)</span></h2>
             <div>
               <input type="text" class="search" placeholder="Search supplies..." />
               <button id="add-general-btn">Add New Item</button>
             </div>
           </div>
-          <table class="inventory-table">
+          <table id="general-table" class="inventory-table">
             <thead>
               <tr>
                 <th>S.No.</th>
@@ -432,59 +418,24 @@
               </tr>
             </thead>
             <tbody>
-              <tr class="inventory-row" data-id="gen1">
-                <td>1</td>
-                <td>Microcentrifuge Tubes (1.5mL)</td>
-                <td>500 pcs</td>
-                <td>Fisher Scientific</td>
-                <td>Cabinet A-3</td>
-                <td>05-408-129</td>
-              </tr>
-              <tr class="inventory-details" id="details-gen1">
-                <td colspan="6">
-                  <div class="detail-grid">
-                    <div class="detail-item">
-                      <div class="detail-label">Reorder Level:</div>
-                      <div>2 bottles</div>
-                    </div>
-                    <div class="detail-item">
-                      <div class="detail-label">Priority:</div>
-                      <div>Medium</div>
-                    </div>
-                    <div class="detail-item">
-                      <div class="detail-label">Status:</div>
-                      <div>Ordered</div>
-                    </div>
-                    <div class="detail-item">
-                      <div class="detail-label">Notes:</div>
-                      <div>Ordered on 02/20/2025. Expected delivery by 03/05/2025.</div>
-                    </div>
-                    <div class="detail-item">
-                      <div class="detail-label">Responsible Person:</div>
-                      <div>John Williams</div>
-                    </div>
-                  </div>
-                  <div style="text-align: right; margin-top: 10px;">
-                    <button class="delete-btn" data-id="gen1">Delete Item</button>
-                  </div>
-                </td>
-              </tr>
+              <!-- Items will be dynamically added -->
             </tbody>
           </table>
         </div>
       </div>
       
+      <!-- Collapsible for Chemicals & Reagents -->
       <div class="collapsible">
         <div class="collapsible-header">Chemicals &amp; Reagents</div>
         <div class="collapsible-content">
           <div class="action-bar">
-            <h2>Chemicals &amp; Reagents <span class="item-count">(3 items)</span></h2>
+            <h2>Chemicals &amp; Reagents <span class="item-count">(0 items)</span></h2>
             <div>
               <input type="text" class="search" placeholder="Search chemicals..." />
               <button id="add-chemical-btn">Add New Chemical</button>
             </div>
           </div>
-          <table class="inventory-table">
+          <table id="chemicals-table" class="inventory-table">
             <thead>
               <tr>
                 <th>S.No.</th>
@@ -496,83 +447,24 @@
               </tr>
             </thead>
             <tbody>
-              <tr class="inventory-row" data-id="chem1">
-                <td>1</td>
-                <td>Tris Base</td>
-                <td>500g</td>
-                <td>Sigma-Aldrich</td>
-                <td>Chemical Cabinet 2</td>
-                <td>77-86-1</td>
-              </tr>
-              <tr class="inventory-details" id="details-chem1">
-                <td colspan="6">
-                  <div class="detail-grid">
-                    <div class="detail-item">
-                      <div class="detail-label">S.No.:</div>
-                      <div>1</div>
-                    </div>
-                    <div class="detail-item">
-                      <div class="detail-label">Product:</div>
-                      <div>Tris Base</div>
-                    </div>
-                    <div class="detail-item">
-                      <div class="detail-label">Amount:</div>
-                      <div>500g</div>
-                    </div>
-                    <div class="detail-item">
-                      <div class="detail-label">Unit Type:</div>
-                      <div>Powder</div>
-                    </div>
-                    <div class="detail-item">
-                      <div class="detail-label">Quantity:</div>
-                      <div>1 bottle</div>
-                    </div>
-                    <div class="detail-item">
-                      <div class="detail-label">CAS#:</div>
-                      <div>77-86-1</div>
-                    </div>
-                    <div class="detail-item">
-                      <div class="detail-label">Supplier:</div>
-                      <div>Sigma-Aldrich</div>
-                    </div>
-                    <div class="detail-item">
-                      <div class="detail-label">CAT#:</div>
-                      <div>T1503</div>
-                    </div>
-                    <div class="detail-item">
-                      <div class="detail-label">Location:</div>
-                      <div>Chemical Cabinet 2</div>
-                    </div>
-                    <div class="detail-item">
-                      <div class="detail-label">Notes:</div>
-                      <div>For buffer preparation. Opened on 01/15/2025.</div>
-                    </div>
-                    <div class="detail-item">
-                      <div class="detail-label">SDS:</div>
-                      <div><a href="#">View SDS</a></div>
-                    </div>
-                  </div>
-                  <div style="text-align: right; margin-top: 10px;">
-                    <button class="delete-btn" data-id="chem1">Delete Item</button>
-                  </div>
-                </td>
-              </tr>
+              <!-- Items will be dynamically added -->
             </tbody>
           </table>
         </div>
       </div>
       
+      <!-- Collapsible for Low Stock Items -->
       <div class="collapsible">
         <div class="collapsible-header">Low Stock Items</div>
         <div class="collapsible-content">
           <div class="action-bar">
-            <h2>Low Stock Items <span class="item-count">(4 items)</span></h2>
+            <h2>Low Stock Items <span class="item-count">(0 items)</span></h2>
             <div>
               <input type="text" class="search" placeholder="Search low stock items..." />
               <button id="add-lowstock-btn">Add Low Stock Item</button>
             </div>
           </div>
-          <table class="inventory-table">
+          <table id="lowstock-table" class="inventory-table">
             <thead>
               <tr>
                 <th>Item</th>
@@ -584,59 +476,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr class="inventory-row" data-id="ls1">
-                <td>Serological Pipettes (10mL)</td>
-                <td>4488</td>
-                <td>20 pcs</td>
-                <td>50 pcs</td>
-                <td>High</td>
-                <td>Not Ordered</td>
-              </tr>
-              <tr class="inventory-details" id="details-ls1">
-                <td colspan="6">
-                  <div class="detail-grid">
-                    <div class="detail-item">
-                      <div class="detail-label">Item:</div>
-                      <div>Serological Pipettes (10mL)</div>
-                    </div>
-                    <div class="detail-item">
-                      <div class="detail-label">CAT#:</div>
-                      <div>4488</div>
-                    </div>
-                    <div class="detail-item">
-                      <div class="detail-label">Supplier:</div>
-                      <div>Corning</div>
-                    </div>
-                    <div class="detail-item">
-                      <div class="detail-label">Current Stock:</div>
-                      <div>20 pcs</div>
-                    </div>
-                    <div class="detail-item">
-                      <div class="detail-label">Reorder Level:</div>
-                      <div>50 pcs</div>
-                    </div>
-                    <div class="detail-item">
-                      <div class="detail-label">Priority:</div>
-                      <div>High</div>
-                    </div>
-                    <div class="detail-item">
-                      <div class="detail-label">Status:</div>
-                      <div>Not Ordered</div>
-                    </div>
-                    <div class="detail-item">
-                      <div class="detail-label">Notes:</div>
-                      <div>Needed for cell culture work next week. Order 200 pcs.</div>
-                    </div>
-                    <div class="detail-item">
-                      <div class="detail-label">Responsible Person:</div>
-                      <div>Dr. Smith</div>
-                    </div>
-                  </div>
-                  <div style="text-align: right; margin-top: 10px;">
-                    <button class="delete-btn" data-id="ls1">Delete Item</button>
-                  </div>
-                </td>
-              </tr>
+              <!-- Items will be dynamically added -->
             </tbody>
           </table>
         </div>
@@ -649,13 +489,13 @@
         <div class="collapsible-header">Cell Lines</div>
         <div class="collapsible-content">
           <div class="action-bar">
-            <h2>Cell Lines <span class="item-count">(3 items)</span></h2>
+            <h2>Cell Lines <span class="item-count">(0 items)</span></h2>
             <div>
               <input type="text" class="search" placeholder="Search cell lines..." />
               <button id="add-cellline-btn">Add New Cell Line</button>
             </div>
           </div>
-          <table class="inventory-table">
+          <table id="celllines-table" class="inventory-table">
             <thead>
               <tr>
                 <th>CellLineID</th>
@@ -666,26 +506,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr class="inventory-row" data-id="cl1">
-                <td>CL001</td>
-                <td>HEK293T</td>
-                <td>Wild type</td>
-                <td>B12</td>
-                <td>P5</td>
-              </tr>
-              <tr class="inventory-details" id="details-cl1">
-                <td colspan="5">
-                  <div class="detail-grid">
-                    <div class="detail-item">
-                      <div class="detail-label">CellLineID:</div>
-                      <div>CL001</div>
-                    </div>
-                  </div>
-                  <div style="text-align: right; margin-top: 10px;">
-                    <button class="delete-btn" data-id="cl1">Delete Item</button>
-                  </div>
-                </td>
-              </tr>
+              <!-- Items will be dynamically added -->
             </tbody>
           </table>
         </div>
@@ -695,13 +516,13 @@
         <div class="collapsible-header">Plasmids</div>
         <div class="collapsible-content">
           <div class="action-bar">
-            <h2>Plasmids <span class="item-count">(3 items)</span></h2>
+            <h2>Plasmids <span class="item-count">(0 items)</span></h2>
             <div>
               <input type="text" class="search" placeholder="Search plasmids..." />
               <button id="add-plasmid-btn">Add New Plasmid</button>
             </div>
           </div>
-          <table class="inventory-table">
+          <table id="plasmid-table" class="inventory-table">
             <thead>
               <tr>
                 <th>PlasmidID</th>
@@ -714,28 +535,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr class="inventory-row" data-id="plasmid1">
-                <td>PL001</td>
-                <td>GFP-Kan</td>
-                <td>pET28a</td>
-                <td>GFP expression vector</td>
-                <td>12345</td>
-                <td>Yes</td>
-                <td>
-                  <button class="delete-btn" data-id="plasmid1">Delete</button>
-                  <button class="visualize-btn" data-id="plasmid1">Visualize</button>
-                </td>
-              </tr>
-              <tr class="inventory-details" id="details-plasmid1">
-                <td colspan="7">
-                  <div class="detail-grid">
-                    <div class="detail-item">
-                      <div class="detail-label">PlasmidID:</div>
-                      <div>PL001</div>
-                    </div>
-                  </div>
-                </td>
-              </tr>
+              <!-- Items will be dynamically added -->
             </tbody>
           </table>
         </div>
@@ -745,13 +545,13 @@
         <div class="collapsible-header">Oligos</div>
         <div class="collapsible-content">
           <div class="action-bar">
-            <h2>Oligos <span class="item-count">(3 items)</span></h2>
+            <h2>Oligos <span class="item-count">(0 items)</span></h2>
             <div>
               <input type="text" class="search" placeholder="Search oligos..." />
               <button id="add-oligo-btn">Add New Oligo</button>
             </div>
           </div>
-          <table class="inventory-table">
+          <table id="oligos-table" class="inventory-table">
             <thead>
               <tr>
                 <th>OligoID</th>
@@ -762,26 +562,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr class="inventory-row" data-id="oligo1">
-                <td>OL001</td>
-                <td>ATCGTAGCTAGCTAGCTAG</td>
-                <td>pET28a</td>
-                <td>GFP</td>
-                <td>Forward primer for GFP cloning</td>
-              </tr>
-              <tr class="inventory-details" id="details-oligo1">
-                <td colspan="5">
-                  <div class="detail-grid">
-                    <div class="detail-item">
-                      <div class="detail-label">OligoID:</div>
-                      <div>OL001</div>
-                    </div>
-                  </div>
-                  <div style="text-align: right; margin-top: 10px;">
-                    <button class="delete-btn" data-id="oligo1">Delete Item</button>
-                  </div>
-                </td>
-              </tr>
+              <!-- Items will be dynamically added -->
             </tbody>
           </table>
         </div>
@@ -791,13 +572,13 @@
         <div class="collapsible-header">Gene Blocks</div>
         <div class="collapsible-content">
           <div class="action-bar">
-            <h2>Gene Blocks <span class="item-count">(3 items)</span></h2>
+            <h2>Gene Blocks <span class="item-count">(0 items)</span></h2>
             <div>
               <input type="text" class="search" placeholder="Search gene blocks..." />
               <button id="add-geneblock-btn">Add New Gene Block</button>
             </div>
           </div>
-          <table class="inventory-table">
+          <table id="geneblocks-table" class="inventory-table">
             <thead>
               <tr>
                 <th>GeneBlockID</th>
@@ -808,47 +589,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr class="inventory-row" data-id="gb1">
-                <td>GB001</td>
-                <td>ATCGATCGATCGTAGCTAGCTAG...</td>
-                <td>GFP-mut1</td>
-                <td>PL004</td>
-                <td>Yes</td>
-              </tr>
-              <tr class="inventory-details" id="details-gb1">
-                <td colspan="5">
-                  <div class="detail-grid">
-                    <div class="detail-item">
-                      <div class="detail-label">GeneBlockID:</div>
-                      <div>GB001</div>
-                    </div>
-                    <div class="detail-item">
-                      <div class="detail-label">Sequence:</div>
-                      <div class="full-sequence">ATCGATCGATCGTAGCTAGCTAGCGATCGATCGTAGCTAGCTATCGATCGATCGTAGCTAGCTAGCGATCGATCGTAGCTAGCTAGCTATCGATCGATCGTAGCTAGCTAGCGATCGATCGTAGCTAGCTATCGAT
-CGATCGATCGTAGCTAGCTAGCGATCGATCGTAGCTAGCTATCGATCGATCGTAGCTAGCTAGCGATCGATCGTAGCTAG</div>
-                    </div>
-                    <div class="detail-item">
-                      <div class="detail-label">Gene:</div>
-                      <div>GFP-mut1</div>
-                    </div>
-                    <div class="detail-item">
-                      <div class="detail-label">Final plasmid ID:</div>
-                      <div>PL004</div>
-                    </div>
-                    <div class="detail-item">
-                      <div class="detail-label">Oligos?:</div>
-                      <div>Yes (OL001, OL002)</div>
-                    </div>
-                    <div class="detail-item">
-                      <div class="detail-label">Notes:</div>
-                      <div>Enhanced brightness mutation. Synthesized by IDT on 01/10/2025.</div>
-                    </div>
-                  </div>
-                  <div style="text-align: right; margin-top: 10px;">
-                    <button class="delete-btn" data-id="gb1">Delete Item</button>
-                  </div>
-                </td>
-              </tr>
+              <!-- Items will be dynamically added -->
             </tbody>
           </table>
         </div>
@@ -916,14 +657,7 @@ CGATCGATCGTAGCTAGCTAGCGATCGATCGTAGCTAGCTATCGATCGATCGTAGCTAGCTAGCGATCGATCGTAGCTAG
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td>Week of Feb 24 - Mar 2, 2025</td>
-                <td><input type="text" value="Dr. Smith" /></td>
-              </tr>
-              <tr>
-                <td>Week of Mar 3 - Mar 9, 2025</td>
-                <td><input type="text" value="John Williams" /></td>
-              </tr>
+              <!-- No hardcoded rows; these should be populated dynamically -->
             </tbody>
           </table>
         </div>
@@ -933,7 +667,7 @@ CGATCGATCGTAGCTAGCTAGCGATCGATCGTAGCTAGCTATCGATCGATCGTAGCTAGCTAGCGATCGATCGTAGCTAG
     <!-- LAB FOLDERS TAB -->
     <div class="tab-content" id="folders">
       <div class="action-bar">
-        <h2>Lab Member Folders <span class="item-count">(3 folders)</span></h2>
+        <h2>Lab Member Folders <span class="item-count">(0 folders)</span></h2>
         <div>
           <input type="text" class="search" placeholder="Search folders..." />
           <button id="add-folder-btn">Add New Folder</button>
@@ -941,40 +675,7 @@ CGATCGATCGTAGCTAGCTAGCGATCGATCGTAGCTAGCTATCGATCGATCGTAGCTAGCTAGCGATCGATCGTAGCTAG
         </div>
       </div>
       <div class="folders-container">
-        <div class="lab-folder">
-          <div class="folder-header">
-            <h3>Dr. Smith</h3>
-            <span style="cursor: pointer; font-size: 20px;">⌵</span>
-          </div>
-          <div class="folder-content">
-            <div style="margin-bottom: 15px;">
-              <button style="width: 100%; margin-bottom: 10px;">Add Files</button>
-              <p><strong>Created:</strong> 01/15/2025</p>
-              <p><strong>Files:</strong> 12</p>
-            </div>
-            <div style="border-top: 1px solid #ddd; padding-top: 10px;">
-              <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee;">
-                <span>Protocol-PCR.docx</span>
-                <button style="padding: 2px 8px; font-size: 12px;">Delete</button>
-              </div>
-            </div>
-            <div class="subfolders">
-              <h4>Subfolders</h4>
-              <div class="subfolder-list">
-                <div class="lab-folder subfolder">
-                  <div class="folder-header">
-                    <h4>Subfolder Example</h4>
-                    <span style="cursor: pointer; font-size: 16px;">⌵</span>
-                  </div>
-                  <div class="folder-content">
-                    <p>No files yet.</p>
-                  </div>
-                </div>
-              </div>
-              <button class="add-subfolder-btn">Add Subfolder</button>
-            </div>
-          </div>
-        </div>
+        <!-- Folders will be dynamically added -->
       </div>
     </div>
     
@@ -1141,7 +842,7 @@ CGATCGATCGTAGCTAGCTAGCGATCGATCGTAGCTAGCTATCGATCGATCGTAGCTAGCTAGCGATCGATCGTAGCTAG
     </div>
   </div>
   
-  <!-- Add Plasmid Modal (with file upload and Visualize option) -->
+  <!-- Add Plasmid Modal -->
   <div id="plasmid-modal" class="modal">
     <div class="modal-content">
       <span class="close">&times;</span>
@@ -1403,7 +1104,7 @@ CGATCGATCGTAGCTAGCTAGCGATCGATCGTAGCTAGCTATCGATCGATCGTAGCTAGCTAGCGATCGATCGTAGCTAG
     </div>
   </div>
   
-  <!-- Add Microscope Booking Modal (with 15-min intervals, End Time and Recurring options) -->
+  <!-- Add Microscope Booking Modal -->
   <div id="booking-modal" class="modal">
     <div class="modal-content">
       <span class="close">&times;</span>
@@ -1526,8 +1227,26 @@ CGATCGATCGTAGCTAGCTAGCGATCGATCGTAGCTAGCTATCGATCGATCGTAGCTAGCTAGCGATCGATCGTAGCTAG
     </div>
   </div>
   
+  <!-- Add Plasmid Visualization Modal -->
+  <div id="plasmid-visualization-modal" class="modal">
+    <div class="modal-content" style="padding: 0; position: relative;">
+      <span class="close" id="plasmid-map-close" style="position: absolute; top: 10px; right: 20px; cursor: pointer;">&times;</span>
+      <div id="plasmid-map-container"></div>
+    </div>
+  </div>
+  
+  <!-- Main JavaScript -->
   <script>
-    // Tab switching functionality
+    // Set your backend URL (update this as needed)
+    const backendBaseURL = 'https://your-backend-domain.com';
+
+    // Global error handler using SweetAlert2
+    function handleError(err) {
+      console.error(err);
+      Swal.fire({ icon: 'error', title: 'Error', text: err.message || 'An error occurred' });
+    }
+
+    // -------------- Tab Switching & Search --------------
     const tabs = document.querySelectorAll('.tab');
     const tabContents = document.querySelectorAll('.tab-content');
     tabs.forEach(tab => {
@@ -1539,31 +1258,25 @@ CGATCGATCGTAGCTAGCTAGCGATCGATCGTAGCTAGCTATCGATCGATCGTAGCTAGCTAGCGATCGATCGTAGCTAG
         document.getElementById(tabId).classList.add('active');
       });
     });
-    
-    // Collapsible group functionality
-    const collapsibleHeaders = document.querySelectorAll('.collapsible-header');
-    collapsibleHeaders.forEach(header => {
+    document.querySelectorAll('.search').forEach(input => {
+      input.addEventListener('keyup', () => {
+        const term = input.value.toLowerCase();
+        const content = input.closest('.tab-content');
+        content.querySelectorAll('.inventory-row').forEach(row => {
+          row.style.display = row.textContent.toLowerCase().includes(term) ? '' : 'none';
+        });
+      });
+    });
+
+    // -------------- Collapsible Groups --------------
+    document.querySelectorAll('.collapsible-header').forEach(header => {
       header.addEventListener('click', () => {
         const content = header.nextElementSibling;
         content.style.display = (content.style.display === 'none' || content.style.display === '') ? 'block' : 'none';
       });
     });
-    
-    // Expand/collapse inventory rows
-    const inventoryRows = document.querySelectorAll('.inventory-row');
-    inventoryRows.forEach(row => {
-      row.addEventListener('click', () => {
-        const detailsId = 'details-' + row.getAttribute('data-id');
-        const detailsRow = document.getElementById(detailsId);
-        if (detailsRow.style.display === 'table-row') {
-          detailsRow.style.display = 'none';
-        } else {
-          detailsRow.style.display = 'table-row';
-        }
-      });
-    });
-    
-    // Modal functionality
+
+    // -------------- Modal Handling --------------
     const modals = {
       general: document.getElementById('general-modal'),
       chemical: document.getElementById('chemical-modal'),
@@ -1590,8 +1303,6 @@ CGATCGATCGTAGCTAGCTAGCGATCGATCGTAGCTAGCTATCGATCGATCGTAGCTAGCTAGCGATCGATCGTAGCTAG
       booking: document.getElementById('add-booking-btn'),
       folder: document.getElementById('add-folder-btn')
     };
-    // For subfolder buttons:
-    const subfolderButtons = document.querySelectorAll('.add-subfolder-btn');
     Object.keys(openButtons).forEach(key => {
       if (openButtons[key]) {
         openButtons[key].addEventListener('click', () => {
@@ -1599,101 +1310,73 @@ CGATCGATCGTAGCTAGCTAGCGATCGATCGTAGCTAGCTATCGATCGATCGTAGCTAGCTAGCGATCGATCGTAGCTAG
         });
       }
     });
-    subfolderButtons.forEach(btn => {
+    document.querySelectorAll('.add-subfolder-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         modals.subfolder.style.display = 'block';
       });
     });
-    const closeButtons = document.querySelectorAll('.close');
-    closeButtons.forEach(button => {
-      button.addEventListener('click', () => {
-        const modal = button.closest('.modal');
-        modal.style.display = 'none';
+    document.querySelectorAll('.close').forEach(btn => {
+      btn.addEventListener('click', () => {
+        btn.closest('.modal').style.display = 'none';
       });
     });
-    window.addEventListener('click', (event) => {
+    window.addEventListener('click', event => {
       Object.values(modals).forEach(modal => {
         if (event.target === modal) {
           modal.style.display = 'none';
         }
       });
     });
-    
-    // Form submission handlers (simulate success)
-    const forms = {
-      general: document.getElementById('general-form'),
-      chemical: document.getElementById('chemical-form'),
-      oligo: document.getElementById('oligo-form'),
-      plasmid: document.getElementById('plasmid-form'),
-      geneblock: document.getElementById('geneblock-form'),
-      cellline: document.getElementById('cellline-form'),
-      lowstock: document.getElementById('lowstock-form'),
-      labduty: document.getElementById('labduty-form'),
-      booking: document.getElementById('booking-form'),
-      folder: document.getElementById('folder-form'),
-      subfolder: document.getElementById('subfolder-form')
-    };
-    const successMessages = {
-      general: document.getElementById('general-success'),
-      chemical: document.getElementById('chemical-success'),
-      oligo: document.getElementById('oligo-success'),
-      plasmid: document.getElementById('plasmid-success'),
-      geneblock: document.getElementById('geneblock-success'),
-      cellline: document.getElementById('cellline-success'),
-      lowstock: document.getElementById('lowstock-success'),
-      labduty: document.getElementById('labduty-success'),
-      booking: document.getElementById('booking-success'),
-      folder: document.getElementById('folder-success'),
-      subfolder: document.getElementById('subfolder-success')
-    };
-    Object.keys(forms).forEach(key => {
-      if (forms[key]) {
-        forms[key].addEventListener('submit', (e) => {
-          e.preventDefault();
-          successMessages[key].style.display = 'block';
-          setTimeout(() => {
-            successMessages[key].style.display = 'none';
-            modals[key].style.display = 'none';
-            forms[key].reset();
-          }, 2000);
+
+    // -------------- Delete Confirmation --------------
+    function confirmDelete(btn) {
+      Swal.fire({
+        title: "Are you sure?",
+        text: "This action cannot be undone.",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText: "Yes, delete it!",
+        cancelButtonText: "Cancel"
+      }).then((result) => {
+        if (result.isConfirmed) {
+          const row = btn.closest('tr');
+          if (row) {
+            row.remove();
+            Swal.fire({ icon: 'success', title: 'Deleted', text: 'Item has been deleted.' });
+          }
+        }
+      });
+    }
+    document.querySelectorAll('.delete-btn').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        confirmDelete(btn);
+      });
+    });
+
+    // -------------- Plasmid Visualization --------------
+    document.querySelectorAll('.visualize-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        // Replace the dummy sequence with your actual plasmid data as needed.
+        const sequence = "ATGCGTACGTAGCTAGCTAGCTAGCTAGCTAGCTAGC";
+        modals.plasmidMap.style.display = 'block';
+        const container = document.getElementById('plasmid-map-container');
+        container.innerHTML = "";
+        new Biojs.Vis.Plasmid({
+          target: "plasmid-map-container",
+          sequence: sequence,
+          circular: true,
+          width: 600,
+          height: 400,
+          features: [] // Optionally add features here
         });
-      }
+      });
     });
-    
-    // Booking recurrence options
-    const recurringCheckbox = document.getElementById('booking-recurring');
-    const recurrenceOptions = document.getElementById('recurrence-options');
-    recurringCheckbox.addEventListener('change', () => {
-      recurrenceOptions.style.display = recurringCheckbox.checked ? 'block' : 'none';
+    document.getElementById('plasmid-map-close').addEventListener('click', () => {
+      modals.plasmidMap.style.display = 'none';
     });
-    
-    // Schedule navigation: week arrows (dummy behavior)
-    const prevWeekBtn = document.getElementById('prev-week');
-    const nextWeekBtn = document.getElementById('next-week');
-    const weekLabel = document.getElementById('week-label');
-    const currentWeekSpan = document.getElementById('current-week');
-    let currentWeekIndex = 0;
-    const weeks = [
-      "Week of February 17 - February 23, 2025",
-      "Week of February 24 - March 2, 2025",
-      "Week of March 3 - March 9, 2025"
-    ];
-    prevWeekBtn.addEventListener('click', () => {
-      if (currentWeekIndex > 0) {
-        currentWeekIndex--;
-        currentWeekSpan.textContent = weeks[currentWeekIndex];
-        weekLabel.textContent = weeks[currentWeekIndex];
-      }
-    });
-    nextWeekBtn.addEventListener('click', () => {
-      if (currentWeekIndex < weeks.length - 1) {
-        currentWeekIndex++;
-        currentWeekSpan.textContent = weeks[currentWeekIndex];
-        weekLabel.textContent = weeks[currentWeekIndex];
-      }
-    });
-    
-    // Dynamically generate schedule grid for 15-min intervals from 08:00 to 22:00
+
+    // -------------- Schedule Grid Generation --------------
     function generateScheduleGrid() {
       const container = document.getElementById('schedule-grid-container');
       container.innerHTML = "";
@@ -1742,7 +1425,6 @@ CGATCGATCGTAGCTAGCTAGCGATCGATCGTAGCTAGCTATCGATCGATCGTAGCTAGCTAGCGATCGATCGTAGCTAG
     }
     
     let isSelecting = false;
-    let selectionStart = null;
     let selectedCells = [];
     
     function scheduleCellMouseDown(e) {
@@ -1750,7 +1432,6 @@ CGATCGATCGTAGCTAGCTAGCGATCGATCGTAGCTAGCTATCGATCGATCGTAGCTAGCTAGCGATCGATCGTAGCTAG
       clearSelection();
       e.target.classList.add('selected');
       selectedCells.push(e.target);
-      selectionStart = e.target;
     }
     
     function scheduleCellMouseEnter(e) {
@@ -1779,54 +1460,89 @@ CGATCGATCGTAGCTAGCTAGCGATCGATCGTAGCTAGCTATCGATCGATCGTAGCTAGCTAGCGATCGATCGTAGCTAG
     
     generateScheduleGrid();
     
-    // Quick Share functionality
+    // -------------- Quick Share Functionality --------------
     document.getElementById('quickshare-form').addEventListener('submit', function(e) {
       e.preventDefault();
       const fileInput = document.getElementById('quickshare-file');
       const file = fileInput.files[0];
       if (file) {
         const li = document.createElement('li');
-        const downloadLink = document.createElement('a');
-        downloadLink.href = URL.createObjectURL(file);
-        downloadLink.download = file.name;
-        downloadLink.textContent = file.name;
-        downloadLink.addEventListener('click', function(e) {
-          setTimeout(() => {
-            li.remove();
-          }, 1000);
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(file);
+        link.download = file.name;
+        link.textContent = file.name;
+        link.addEventListener('click', function(e) {
+          setTimeout(() => li.remove(), 1000);
         });
-        li.appendChild(downloadLink);
+        li.appendChild(link);
         document.getElementById('quickshare-list').appendChild(li);
         fileInput.value = "";
       }
     });
     
-    // Visualize plasmid map functionality
-    const visualizeButtons = document.querySelectorAll('.visualize-btn');
-    visualizeButtons.forEach(btn => {
-      btn.addEventListener('click', () => {
-        modals.plasmidMap.style.display = 'block';
-        currentScale = 1;
-        plasmidMapContainer.style.transform = `scale(${currentScale})`;
-      });
-    });
-    const plasmidMapContainer = document.getElementById('plasmid-map-container');
-    let currentScale = 1;
-    plasmidMapContainer.addEventListener('wheel', function(e) {
-      e.preventDefault();
-      if (e.deltaY < 0) {
-        currentScale *= 1.1;
-      } else {
-        currentScale /= 1.1;
+    // -------------- Form Submission Handlers --------------
+    const forms = {
+      general: document.getElementById('general-form'),
+      chemical: document.getElementById('chemical-form'),
+      oligo: document.getElementById('oligo-form'),
+      plasmid: document.getElementById('plasmid-form'),
+      geneblock: document.getElementById('geneblock-form'),
+      cellline: document.getElementById('cellline-form'),
+      lowstock: document.getElementById('lowstock-form'),
+      labduty: document.getElementById('labduty-form'),
+      booking: document.getElementById('booking-form'),
+      folder: document.getElementById('folder-form'),
+      subfolder: document.getElementById('subfolder-form')
+    };
+    Object.keys(forms).forEach(key => {
+      if (forms[key]) {
+        forms[key].addEventListener('submit', e => {
+          e.preventDefault();
+          Swal.fire({ icon: 'success', title: 'Success', text: 'Item added successfully' });
+          // Here you would normally also send the data to your backend.
+          setTimeout(() => {
+            modals[key].style.display = 'none';
+            forms[key].reset();
+          }, 1000);
+        });
       }
-      plasmidMapContainer.style.transform = `scale(${currentScale})`;
-    });
-    document.getElementById('plasmid-map-close').addEventListener('click', () => {
-      modals.plasmidMap.style.display = 'none';
     });
     
-    // Ctrl+F: focus search in active tab
-    document.addEventListener('keydown', function(e) {
+    // -------------- Booking Recurrence Options --------------
+    const recurringCheckbox = document.getElementById('booking-recurring');
+    const recurrenceOptions = document.getElementById('recurrence-options');
+    recurringCheckbox.addEventListener('change', () => {
+      recurrenceOptions.style.display = recurringCheckbox.checked ? 'block' : 'none';
+    });
+    
+    // -------------- Week Navigation for Schedules --------------
+    const prevWeekBtn = document.getElementById('prev-week');
+    const nextWeekBtn = document.getElementById('next-week');
+    const weekLabel = document.getElementById('week-label');
+    const currentWeekSpan = document.getElementById('current-week');
+    let currentWeekIndex = 0;
+    const weeks = [
+      "Week of February 17 - February 23, 2025",
+      "Week of February 24 - March 2, 2025",
+      "Week of March 3 - March 9, 2025"
+    ];
+    prevWeekBtn.addEventListener('click', () => {
+      if (currentWeekIndex > 0) {
+        currentWeekIndex--;
+        currentWeekSpan.textContent = weeks[currentWeekIndex];
+        weekLabel.textContent = weeks[currentWeekIndex];
+      }
+    });
+    nextWeekBtn.addEventListener('click', () => {
+      if (currentWeekIndex < weeks.length - 1) {
+        currentWeekIndex++;
+        currentWeekSpan.textContent = weeks[currentWeekIndex];
+        weekLabel.textContent = weeks[currentWeekIndex];
+      }
+    });
+    
+    // -------------- Ctrl+F Shortcut for Search --------------
+    document.addEventListener('keydown', e => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
         e.preventDefault();
         const activeTab = document.querySelector('.tab-content.active');
@@ -1835,60 +1551,6 @@ CGATCGATCGTAGCTAGCTAGCGATCGATCGTAGCTAGCTATCGATCGATCGTAGCTAGCTAGCGATCGATCGTAGCTAG
           if (searchInput) searchInput.focus();
         }
       }
-    });
-    
-    // Search functionality for each tab
-    const searchInputs = document.querySelectorAll('.search');
-    searchInputs.forEach(input => {
-      input.addEventListener('keyup', () => {
-        const searchTerm = input.value.toLowerCase();
-        const tabContent = input.closest('.tab-content');
-        const rows = tabContent.querySelectorAll('.inventory-row');
-        if (rows.length > 0) {
-          rows.forEach(row => {
-            const text = row.textContent.toLowerCase();
-            const detailsId = 'details-' + row.getAttribute('data-id');
-            const detailsRow = document.getElementById(detailsId);
-            if (text.includes(searchTerm)) {
-              row.style.display = 'table-row';
-              if (detailsRow) {
-                const detailsText = detailsRow.textContent.toLowerCase();
-                detailsRow.style.display = detailsText.includes(searchTerm) && !text.includes(searchTerm) ? 'table-row' : 'none';
-              }
-            } else {
-              if (detailsRow && detailsRow.textContent.toLowerCase().includes(searchTerm)) {
-                row.style.display = 'table-row';
-                detailsRow.style.display = 'table-row';
-              } else {
-                row.style.display = 'none';
-                if (detailsRow) detailsRow.style.display = 'none';
-              }
-            }
-          });
-        }
-        const cards = tabContent.querySelectorAll('.lab-folder');
-        if (cards.length > 0) {
-          cards.forEach(card => {
-            const text = card.textContent.toLowerCase();
-            card.style.display = text.includes(searchTerm) ? 'block' : 'none';
-          });
-        }
-      });
-    });
-    
-    // Folder expansion/collapse (for folders and subfolders)
-    const folderHeaders = document.querySelectorAll('.folder-header');
-    folderHeaders.forEach(header => {
-      header.addEventListener('click', () => {
-        const content = header.nextElementSibling;
-        content.style.display = (content.style.display === 'none' || content.style.display === '') ? 'block' : 'none';
-      });
-    });
-    
-    // Toggle Folder List View
-    const folderViewToggle = document.getElementById('folder-view-toggle');
-    folderViewToggle.addEventListener('click', () => {
-      document.querySelector('.folders-container').classList.toggle('list-view');
     });
   </script>
 </body>
